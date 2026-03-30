@@ -1,170 +1,146 @@
 # ComfyUI Metadata Reader
 
-一款Windows桌面小工具，用于读取并解析ComfyUI生成的PNG图片中内嵌的工作流、提示词、种子、采样参数等元数据。
+A Windows desktop tool for reading and parsing metadata embedded in ComfyUI-generated images (PNG, WebP, JPEG), including workflows, prompts, seeds, and sampling parameters.
 
-## 功能特性
+## Quick Start for New Users
 
-- 支持选择ComfyUI PNG、WebP和JPEG图片
-- 支持拖拽PNG、WebP或JPEG图片到应用程序窗口或图片区域
-- 自动读取图片的元数据，解析字段：
-  - prompt（提示词）
-  - workflow（工作流）
-  - seed、steps、cfg、sampler_name等生成参数
-- 界面清晰展示：提示词、种子、步数、CFG、采样器、模型信息
-- 提供一键复制提示词、一键复制工作流JSON按钮
-- 支持将解析结果导出为JSON/TXT文件
-- 友好的错误提示（非ComfyUI图片、文件损坏等）
-- 三栏布局设计：文件列表、图片预览、解析结果
-- 支持导入整个目录的图片（追加模式）
-- 支持文件列表和缩略图视图切换
-- 支持批量选择图片文件
-- 图片预览支持滚轮缩放、拖拽平移、双击复位
+### Option 1: Run from Source (Recommended for Developers)
 
-## 技术栈
+1. **Install Python 3.10+**
+   - Download from [python.org](https://www.python.org/downloads/)
+   - During installation, check "Add Python to PATH"
 
-- 语言：Python
-- GUI：Tkinter（原生）
-- 依赖库：Pillow、tkinterdnd2
-
-## 项目结构
-
-```
-comfyui出图查看器/
-├── main.py                    # 主入口文件
-├── parsers/                   # 解析器模块
-│   ├── __init__.py
-│   └── metadata_parser.py     # 元数据解析器
-├── ui/                        # 界面模块
-│   ├── __init__.py
-│   ├── image_panel.py         # 图片显示面板
-│   ├── file_list_panel.py     # 文件列表面板
-│   └── result_panel.py        # 结果显示面板
-└── utils/                     # 工具模块
-    ├── __init__.py
-    └── helpers.py             # 工具函数
-```
-
-## 安装依赖
-
-```bash
-pip install -r requirements.txt
-```
-
-## 运行程序
-
-```bash
-python main.py
-```
-
-## 打包为exe文件
-
-1. 安装pyinstaller：
+2. **Download the Project**
    ```bash
-   pip install pyinstaller
+   git clone https://github.com/kenkong00/prompts-reader.git
+   cd prompts-reader
    ```
 
-2. 执行打包命令：
+3. **Create Virtual Environment (Optional but Recommended)**
    ```bash
-   pyinstaller --onefile --windowed main.py
+   python -m venv .venv
+   .venv\Scripts\activate
    ```
 
-3. 打包后的exe文件会在`dist`目录中
+4. **Install Dependencies**
+   ```bash
+   pip install -r requirements.txt
+   ```
 
-## 使用方法
+5. **Run the Application**
+   ```bash
+   python main.py
+   ```
 
-1. **导入图片**：
-   - 点击左侧"文件"按钮，选择一个或多个图片文件
-   - 点击左侧"目录"按钮，导入整个目录中的图片
-   - 或直接拖拽PNG、WebP或JPEG图片到应用程序窗口的任何位置
-   - 或直接拖拽PNG、WebP或JPEG图片到左侧图片区域
-2. **文件列表管理**：
-   - 点击"清空"按钮，清空当前文件列表
-   - 点击"小图"按钮，切换到缩略图视图
-   - 点击"名称"按钮，切换回列表视图
-   - 点击文件列表或缩略图中的图片，在右侧查看解析结果
-3. **图片预览操作**：
-   - 滚轮滚动：缩放图片（以鼠标位置为中心）
-   - 按住左键拖动：平移图片
-   - 双击：复位图片到适应大小
-4. 程序会自动解析图片中的元数据
-5. 在标签页中查看解析结果：
-   - 提示词：查看正面提示词和负面提示词
-   - 参数：查看种子、步数、CFG、采样器、模型等参数
-   - 工作流：查看完整的工作流JSON
-6. 使用按钮功能：
-   - 复制提示词：将提示词复制到剪贴板
-   - 复制工作流：将工作流JSON复制到剪贴板
-   - 导出JSON：将解析结果导出为JSON文件
-   - 导出TXT：将解析结果导出为TXT文件
+### Option 2: Use Pre-built Executable (Coming Soon)
 
-## 界面说明
+Download the latest release from the [Releases](https://github.com/kenkong00/prompts-reader/releases) page.
 
-- **左侧**：文件列表区域，显示导入的图片文件，支持列表和缩略图视图切换
-- **中间**：图片预览区域，显示当前选中图片的预览，支持缩放和拖拽
-- **右侧**：解析结果区域，包含提示词、参数和工作流标签页
+## Features
 
-## 注意事项
+- Support for ComfyUI PNG, WebP, and JPEG images
+- Drag and drop support for single or multiple images
+- Automatic metadata parsing:
+  - Prompt (positive & negative)
+  - Workflow JSON
+  - Generation parameters (seed, steps, CFG, sampler, model)
+- Modern dark theme UI
+- Three-panel layout: file list, image preview, metadata display
+- Thumbnail and list view modes
+- Image preview with zoom, pan, and reset
+- Copy prompts and workflow to clipboard
+- Export metadata to JSON or TXT files
 
-- 支持ComfyUI生成的PNG、WebP和JPEG图片，其他图片可能无法解析
-- 确保图片文件未损坏，否则可能解析失败
-- 工作流JSON可能会很长，建议使用复制功能后在编辑器中查看
+## Supported Node Types
 
-## 版本历史
+The parser supports the following ComfyUI node types:
+- `CLIPTextEncode` - Standard text encoding
+- `CLIPTextEncodeSDXL` - SDXL text encoding
+- `Text Multiline` - Multiline text input
+- `KSampler` / `KSamplerAdvanced` - Sampling parameters
+- `UNETLoader` / `CheckpointLoaderSimple` - Model loading
+
+## Project Structure
+
+```
+comfyui-metadata-reader/
+├── main.py                    # Main entry point
+├── parsers/                   # Parser module
+│   ├── __init__.py
+│   └── metadata_parser.py     # Metadata parser
+├── ui/                        # UI module
+│   ├── __init__.py
+│   ├── image_panel.py         # Image display panel
+│   ├── file_list_panel.py     # File list panel
+│   ├── result_panel.py        # Result display panel
+│   └── styles.py              # Theme and styles
+├── utils/                     # Utility module
+│   ├── __init__.py
+│   └── helpers.py             # Helper functions
+└── requirements.txt           # Dependencies
+```
+
+## Usage
+
+1. **Import Images**
+   - Click "File" button to select image files
+   - Click "Dir" button to import a directory
+   - Drag and drop images directly into the window
+
+2. **View Metadata**
+   - Click on an image in the list to view its metadata
+   - Switch between Prompt, Params, and Workflow tabs
+
+3. **Image Preview**
+   - Scroll wheel: Zoom in/out
+   - Drag: Pan image
+   - Double-click: Reset to fit
+
+4. **Export Data**
+   - Copy: Copy current tab content to clipboard
+   - Export JSON: Save metadata as JSON file
+   - Export TXT: Save metadata as text file
+
+## Building from Source
+
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed main.py
+```
+
+The executable will be in the `dist` directory.
+
+## Requirements
+
+- Python 3.10+
+- Pillow
+- tkinterdnd2
+
+## Notes
+
+- Only ComfyUI-generated images with embedded metadata are supported
+- Some WebP images may have incomplete EXIF data parsing
+- Large thumbnail collections may use significant memory
+
+## License
+
+Open source project, contributions welcome!
+
+## Version History
+
+### v1.2.0
+- Modern dark theme UI (Catppuccin Mocha style)
+- English interface
+- Enhanced metadata parser for CLIPTextEncode nodes
+- Improved UTF-16 encoding detection for WebP images
+- Dynamic preview panel width for maximized windows
 
 ### v1.1.0
-- 代码模块化重构，拆分为 parsers、ui、utils 三个模块
-- 图片预览支持滚轮缩放、拖拽平移、双击复位
-- 修复多文件拖拽无法识别的问题（Windows花括号格式）
-- 修复缩略图模式拖拽新图片不自动选中的问题
-- 添加图片缓存机制，提升缩放流畅度
+- Modular code structure
+- Image preview with zoom, pan, reset
+- Fixed multi-file drag and drop
 
 ### v1.0.0
-- 初始版本，支持基本的元数据解析功能
-- 支持PNG、WebP和JPEG图片格式
-- 支持拖拽功能
-- 支持导入文件和目录
-- 支持列表和缩略图视图切换
-- 支持复制和导出功能
-
----
-
-## 工作日志
-
-### 2025-03-30
-
-#### 已完成
-1. **多文件拖拽修复**：Windows拖拽多文件时路径格式为 `{path1} {path2}`，原代码只处理了单花括号，修改为用正则提取所有花括号内容
-2. **图片预览功能增强**：
-   - 滚轮缩放（以鼠标位置为中心）
-   - 按住左键拖拽平移
-   - 双击复位
-   - 添加缓存机制优化流畅度
-3. **代码模块化重构**：
-   - `parsers/` - 元数据解析器
-   - `ui/` - 界面组件（ImagePanel、FileListPanel、ResultPanel）
-   - `utils/` - 工具函数
-   - `main.py` - 主入口
-4. **缩略图模式选中问题修复**：拖拽新图片后自动选中并显示
-
-#### 待优化事项
-- [ ] 界面美化：考虑使用 ttk 主题或自定义样式
-- [ ] 支持更多AI工具的元数据格式（Midjourney、Stable Diffusion WebUI等）
-- [ ] 添加图片对比功能（并排显示多张图片）
-- [ ] 支持批量导出元数据
-- [ ] 添加搜索/过滤功能
-- [ ] 支持快捷键操作
-- [ ] 添加设置页面（自定义缩放比例、界面语言等）
-- [ ] 支持拖拽排序文件列表
-- [ ] 添加收藏/标记功能
-- [ ] 支持从剪贴板粘贴图片
-
-#### 已知问题
-- 部分WebP图片的EXIF数据解析可能不完整
-- 缩略图模式下大量图片可能占用较多内存
-
----
-
-## 开发者
-
-- 基于Python和Tkinter开发
-- 开源项目，欢迎贡献
+- Initial release
+- Basic metadata parsing
+- PNG, WebP, JPEG support

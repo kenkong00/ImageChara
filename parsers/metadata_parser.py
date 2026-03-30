@@ -93,25 +93,50 @@ class MetadataParser:
         try:
             workflow_data = json.loads(prompt_data)
             prompt_parts = []
+            negative_parts = []
+            
             for node_id, node_data in workflow_data.items():
-                if node_data.get('class_type') == 'Text Multiline':
-                    text = node_data.get('inputs', {}).get('text', '')
+                class_type = node_data.get('class_type', '')
+                inputs = node_data.get('inputs', {})
+                title = node_data.get('_meta', {}).get('title', '').lower()
+                
+                if class_type == 'Text Multiline':
+                    text = inputs.get('text', '')
                     if text:
                         prompt_parts.append(text)
+                
+                elif class_type == 'CLIPTextEncode':
+                    text = inputs.get('text', '')
+                    if text:
+                        if 'negative' in title:
+                            negative_parts.append(text)
+                        elif 'positive' in title or not negative_parts:
+                            prompt_parts.append(text)
+                
+                elif class_type in ('CLIPTextEncodeSDXL', 'CLIPTextEncodeSDXLRefiner'):
+                    text_g = inputs.get('text_g', '')
+                    text_l = inputs.get('text_l', '')
+                    if text_g:
+                        prompt_parts.append(text_g)
+                    if text_l:
+                        prompt_parts.append(text_l)
 
             if prompt_parts:
                 self.metadata['prompt'] = '\n'.join(prompt_parts)
+            if negative_parts:
+                self.metadata['negative_prompt'] = '\n'.join(negative_parts)
 
             for node_id, node_data in workflow_data.items():
-                if node_data.get('class_type') == 'KSamplerAdvanced':
-                    inputs = node_data.get('inputs', {})
-                    self.metadata['seed'] = str(inputs.get('noise_seed', ''))
+                class_type = node_data.get('class_type', '')
+                inputs = node_data.get('inputs', {})
+                
+                if class_type in ('KSampler', 'KSamplerAdvanced'):
+                    self.metadata['seed'] = str(inputs.get('seed', inputs.get('noise_seed', '')))
                     self.metadata['steps'] = str(inputs.get('steps', ''))
                     self.metadata['cfg'] = str(inputs.get('cfg', ''))
                     self.metadata['sampler_name'] = str(inputs.get('sampler_name', ''))
-                elif node_data.get('class_type') == 'UNETLoader':
-                    inputs = node_data.get('inputs', {})
-                    model_name = inputs.get('unet_name', '')
+                elif class_type in ('UNETLoader', 'CheckpointLoaderSimple'):
+                    model_name = inputs.get('unet_name', inputs.get('ckpt_name', ''))
                     if model_name:
                         self.metadata['model'] = model_name.split('\\')[-1]
         except json.JSONDecodeError:
