@@ -128,11 +128,21 @@ Open source project, contributions welcome!
 
 ### v1.2.0
 
-- Modern dark theme UI (Catppuccin Mocha style)
-- English interface
-- Enhanced metadata parser for CLIPTextEncode nodes
-- Improved UTF-16 encoding detection for WebP images
-- Dynamic preview panel width for maximized windows
+- **Modern dark theme UI** (Catppuccin Mocha style)
+- **English interface** with Chinese documentation
+- **Enhanced metadata parser** for CLIPTextEncode nodes
+- **Improved UTF-16 encoding detection** for WebP images
+- **Dynamic preview panel width** for maximized windows
+- **Fixed type error** handling for list-type metadata values
+- **Optimized thumbnail selection** with better border width
+- **Improved tab switching** with proper selected state
+- **Enhanced button layout** with better spacing
+- **Hand cursor** for image drag operations
+- **Fixed multi-file drag and drop** (Windows curly brace format)
+- **Modular code structure** with parsers, ui, and utils modules
+- **Image preview improvements** with zoom, pan, and reset
+- **Image cache mechanism** for smoother zooming
+- **Fixed thumbnail mode selection** after drag and drop
 
 ### v1.1.0
 
