@@ -120,6 +120,14 @@ class ImagePanel:
         self.canvas_image_id = None
         self.fit_to_canvas()
     
+    def clear_image(self):
+        self.original_image = None
+        self.current_image = None
+        self.canvas_image_id = None
+        self.cached_image = None
+        self.cached_scale = 0
+        self.show_placeholder()
+    
     def fit_to_canvas(self):
         if self.original_image is None:
             return

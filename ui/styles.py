@@ -215,10 +215,11 @@ class ModernStyle:
         return text
     
     @classmethod
-    def create_styled_listbox(cls, parent, height=30):
+    def create_styled_listbox(cls, parent, height=30, selectmode=tk.SINGLE):
         listbox = tk.Listbox(
             parent,
             height=height,
+            selectmode=selectmode,
             exportselection=0,
             bg=cls.COLORS['bg_secondary'],
             fg=cls.COLORS['text_primary'],

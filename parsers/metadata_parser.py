@@ -16,18 +16,52 @@ class MetadataParser:
         }
     
     def parse(self, img):
+        # Check for chara data first (AI Chat Character)
+        chara_data = None
+        chara_raw = None
+        if 'chara' in img.info:
+            chara_data = img.info['chara']
+            import base64
+            try:
+                decoded = base64.b64decode(chara_data)
+                chara_raw = json.loads(decoded.decode('utf-8'))
+            except:
+                pass
+        
+        # Then check for other metadata
         if 'parameters' in img.info:
-            return self.parse_parameters(img.info['parameters'])
+            result = self.parse_parameters(img.info['parameters'])
         elif 'prompt' in img.info:
-            return self.parse_prompt_json(img.info['prompt'])
+            result = self.parse_prompt_json(img.info['prompt'])
+        elif 'exif_b64' in img.info:
+            # Handle base64 encoded exif data (from PNG saved by our app)
+            import base64
+            try:
+                exif_data = base64.b64decode(img.info['exif_b64'])
+                result = self.parse_exif_data(exif_data)
+            except:
+                result = self.parse_other_ai_image()
         elif 'exif' in img.info:
-            return self.parse_exif_data(img.info['exif'])
+            result = self.parse_exif_data(img.info['exif'])
         elif 'AIGC' in img.info:
-            return self.parse_aigc_data(img.info['AIGC'])
+            result = self.parse_aigc_data(img.info['AIGC'])
         elif 'xmp' in img.info:
-            return self.parse_xmp_data(img.info['xmp'])
+            result = self.parse_xmp_data(img.info['xmp'])
+        elif chara_data:
+            result = self.parse_chat_character(chara_data)
         else:
-            return self.parse_other_ai_image()
+            result = self.parse_other_ai_image()
+        
+        # If chara data exists, add it to the result
+        if chara_data:
+            if result.get('model') != 'AI Chat Character':
+                chara_result = self.parse_chat_character(chara_data)
+                result['chara_workflow'] = chara_result.get('workflow', '')
+            # Always save the raw chara data for editing
+            if chara_raw:
+                result['chara_raw'] = chara_raw
+        
+        return result
     
     def parse_parameters(self, parameters):
         lines = parameters.split('\n')
@@ -103,11 +137,15 @@ class MetadataParser:
                 if class_type == 'Text Multiline':
                     text = inputs.get('text', '')
                     if text:
+                        if isinstance(text, list):
+                            text = ' '.join(map(str, text))
                         prompt_parts.append(text)
                 
                 elif class_type == 'CLIPTextEncode':
                     text = inputs.get('text', '')
                     if text:
+                        if isinstance(text, list):
+                            text = ' '.join(map(str, text))
                         if 'negative' in title:
                             negative_parts.append(text)
                         elif 'positive' in title or not negative_parts:
@@ -117,8 +155,12 @@ class MetadataParser:
                     text_g = inputs.get('text_g', '')
                     text_l = inputs.get('text_l', '')
                     if text_g:
+                        if isinstance(text_g, list):
+                            text_g = ' '.join(map(str, text_g))
                         prompt_parts.append(text_g)
                     if text_l:
+                        if isinstance(text_l, list):
+                            text_l = ' '.join(map(str, text_l))
                         prompt_parts.append(text_l)
 
             if prompt_parts:
@@ -138,6 +180,8 @@ class MetadataParser:
                 elif class_type in ('UNETLoader', 'CheckpointLoaderSimple'):
                     model_name = inputs.get('unet_name', inputs.get('ckpt_name', ''))
                     if model_name:
+                        if isinstance(model_name, list):
+                            model_name = str(model_name)
                         self.metadata['model'] = model_name.split('\\')[-1]
         except json.JSONDecodeError:
             pass
@@ -370,6 +414,55 @@ class MetadataParser:
         except Exception:
             pass
 
+        return self.metadata
+
+    def parse_chat_character(self, chara_data):
+        self.metadata = {
+            'prompt': 'AI Chat Character',
+            'negative_prompt': 'None',
+            'seed': 'None',
+            'steps': 'None',
+            'cfg': 'None',
+            'sampler_name': 'None',
+            'model': 'AI Chat Character',
+            'workflow': ''
+        }
+        
+        try:
+            # Try to decode base64 if it looks like base64
+            import base64
+            
+            # Check if it's base64 encoded
+            if chara_data and chara_data[0] in 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=':
+                try:
+                    decoded = base64.b64decode(chara_data)
+                    chara_data = decoded.decode('utf-8')
+                except:
+                    pass
+            
+            chara_info = json.loads(chara_data)
+            self.metadata['workflow'] = "AI Chat Character Info:\n"
+            self.metadata['workflow'] += f"Name: {chara_info.get('name', 'Unknown')}\n"
+            self.metadata['workflow'] += f"Description: {chara_info.get('description', '')}\n"
+            
+            first_mes = chara_info.get('first_mes', '')
+            if first_mes:
+                self.metadata['workflow'] += f"First Message: {first_mes}\n"
+            
+            scenario = chara_info.get('scenario', '')
+            if scenario:
+                self.metadata['workflow'] += f"Scenario: {scenario}\n"
+            
+            create_date = chara_info.get('create_date', '')
+            if create_date:
+                self.metadata['workflow'] += f"Create Date: {create_date}\n"
+            
+            personality = chara_info.get('personality', '')
+            if personality:
+                self.metadata['workflow'] += f"Personality: {personality}\n"
+        except Exception as e:
+            self.metadata['workflow'] = f"Error parsing chat character: {str(e)}"
+        
         return self.metadata
 
     def parse_other_ai_image(self):

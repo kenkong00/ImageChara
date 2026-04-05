@@ -1,6 +1,6 @@
 import tkinter as tk
 from tkinter import ttk, messagebox
-from PIL import Image
+from PIL import Image, ImageTk
 from tkinterdnd2 import TkinterDnD, DND_FILES
 import os
 
@@ -12,9 +12,18 @@ from utils import shorten_filename, parse_dropped_files, get_timestamp
 class ComfyUIMetadataReader:
     def __init__(self, root):
         self.root = root
-        self.root.title("ComfyUI Metadata Reader")
+        self.root.title("图灵注 ImageChara")
         self.root.geometry("1200x750")
         self.root.resizable(True, True)
+        
+        # Set window icon
+        try:
+            if os.path.exists('logo_256x256.png'):
+                icon_image = Image.open('logo_256x256.png')
+                icon_photo = ImageTk.PhotoImage(icon_image)
+                self.root.iconphoto(True, icon_photo)
+        except:
+            pass
         
         self.root.configure(bg=ModernStyle.COLORS['bg_primary'])
         ModernStyle.configure_style(self.root)
@@ -29,7 +38,9 @@ class ComfyUIMetadataReader:
         self.file_list_panel = FileListPanel(
             self.main_frame,
             on_file_select=self.on_file_select,
-            shorten_filename_func=shorten_filename
+            shorten_filename_func=shorten_filename,
+            on_create_character=self.create_character,
+            on_clear_preview=self.clear_preview
         )
         
         self.image_panel = ImagePanel(self.main_frame)
@@ -37,7 +48,8 @@ class ComfyUIMetadataReader:
         self.result_panel = ResultPanel(
             self.main_frame,
             clipboard_func=self.copy_to_clipboard,
-            status_func=self.update_status
+            status_func=self.update_status,
+            on_file_added=self.on_file_added
         )
         
         self.status_frame = ttk.Frame(self.root)
@@ -85,6 +97,13 @@ class ComfyUIMetadataReader:
     
     def on_file_select(self, file_path):
         self.process_file(file_path)
+    
+    def clear_preview(self):
+        self.image_panel.clear_image()
+        self.result_panel.clear()
+    
+    def on_file_added(self, file_path):
+        self.file_list_panel.add_and_select_file(file_path)
     
     def process_file(self, file_path):
         try:
@@ -151,6 +170,93 @@ class ComfyUIMetadataReader:
                 self.detail_text.insert(tk.END, "No history")
             
             self.detail_text.config(state=tk.DISABLED)
+    
+    def create_character(self):
+        from tkinter import simpledialog, filedialog
+        import json
+        
+        # Create character creation dialog
+        dialog = tk.Toplevel(self.root)
+        dialog.title("Create AI Chat Character")
+        dialog.geometry("500x600")
+        dialog.configure(bg=ModernStyle.COLORS['bg_primary'])
+        
+        # Character name
+        name_label = ttk.Label(dialog, text="Character Name:", font=ModernStyle.FONTS['body'])
+        name_label.pack(pady=(20, 5), padx=20, anchor=tk.W)
+        name_var = tk.StringVar()
+        name_entry = ttk.Entry(dialog, textvariable=name_var, width=40)
+        name_entry.pack(pady=(0, 15), padx=20, fill=tk.X)
+        
+        # Character description
+        desc_label = ttk.Label(dialog, text="Description:", font=ModernStyle.FONTS['body'])
+        desc_label.pack(pady=(10, 5), padx=20, anchor=tk.W)
+        desc_text = ModernStyle.create_styled_text(dialog, wrap=tk.WORD, height=10)
+        desc_text.pack(pady=(0, 15), padx=20, fill=tk.X)
+        
+        # First message
+        first_mes_label = ttk.Label(dialog, text="First Message:", font=ModernStyle.FONTS['body'])
+        first_mes_label.pack(pady=(10, 5), padx=20, anchor=tk.W)
+        first_mes_text = ModernStyle.create_styled_text(dialog, wrap=tk.WORD, height=5)
+        first_mes_text.pack(pady=(0, 15), padx=20, fill=tk.X)
+        
+        # Scenario
+        scenario_label = ttk.Label(dialog, text="Scenario:", font=ModernStyle.FONTS['body'])
+        scenario_label.pack(pady=(10, 5), padx=20, anchor=tk.W)
+        scenario_text = ModernStyle.create_styled_text(dialog, wrap=tk.WORD, height=5)
+        scenario_text.pack(pady=(0, 20), padx=20, fill=tk.X)
+        
+        def save_character():
+            name = name_var.get().strip()
+            if not name:
+                messagebox.showerror("Error", "Character name is required")
+                return
+            
+            desc = desc_text.get(1.0, tk.END).strip()
+            first_mes = first_mes_text.get(1.0, tk.END).strip()
+            scenario = scenario_text.get(1.0, tk.END).strip()
+            
+            # Create character data
+            chara_data = {
+                "name": name,
+                "description": desc,
+                "first_mes": first_mes,
+                "scenario": scenario,
+                "avatar": "none",
+                "chara": f"{name} - {desc[:30]}...",
+                "create_date": "2026-04-05",
+                "data": {
+                    "character_books": []
+                }
+            }
+            
+            # Save as JSON
+            file_path = filedialog.asksaveasfilename(
+                title="Save Character",
+                defaultextension=".json",
+                initialfile=name.replace(' ', '_'),
+                filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")]
+            )
+            
+            if file_path:
+                try:
+                    with open(file_path, 'w', encoding='utf-8') as f:
+                        json.dump(chara_data, f, ensure_ascii=False, indent=2)
+                    messagebox.showinfo("Success", f"Character saved to {file_path}")
+                    self.update_status(f"Created character: {name}")
+                    dialog.destroy()
+                except Exception as e:
+                    messagebox.showerror("Error", f"Error saving character: {str(e)}")
+        
+        # Buttons
+        button_frame = ttk.Frame(dialog)
+        button_frame.pack(pady=20, padx=20, fill=tk.X)
+        
+        save_button = ttk.Button(button_frame, text="💾 Save", command=save_character, width=15)
+        save_button.pack(side=tk.RIGHT, padx=5)
+        
+        cancel_button = ttk.Button(button_frame, text="❌ Cancel", command=dialog.destroy, width=15)
+        cancel_button.pack(side=tk.RIGHT, padx=5)
 
 
 if __name__ == "__main__":

@@ -7,9 +7,11 @@ from .styles import ModernStyle
 
 
 class FileListPanel:
-    def __init__(self, parent, on_file_select, shorten_filename_func):
+    def __init__(self, parent, on_file_select, shorten_filename_func, on_create_character=None, on_clear_preview=None):
         self.on_file_select = on_file_select
         self.shorten_filename = shorten_filename_func
+        self.on_create_character = on_create_character
+        self.on_clear_preview = on_clear_preview
         
         self.frame = ttk.LabelFrame(parent, text="  Files  ", padding="10", width=320)
         self.frame.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 15))
@@ -51,10 +53,18 @@ class FileListPanel:
         )
         self.toggle_button.pack(side=tk.LEFT, padx=1)
         
+        self.create_char_button = ttk.Button(
+            self.button_frame, 
+            text="👤Char", 
+            command=self.create_character, 
+            width=6
+        )
+        self.create_char_button.pack(side=tk.LEFT, padx=1)
+        
         self.list_container = ttk.Frame(self.frame)
         self.list_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
-        self.file_list = ModernStyle.create_styled_listbox(self.list_container, height=30)
+        self.file_list = ModernStyle.create_styled_listbox(self.list_container, height=30, selectmode=tk.EXTENDED)
         self.file_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
         
         self.scrollbar = ttk.Scrollbar(self.list_container, orient=tk.VERTICAL, command=self.file_list.yview)
@@ -62,6 +72,8 @@ class FileListPanel:
         self.file_list.config(yscrollcommand=self.scrollbar.set)
         
         self.file_list.bind("<<ListboxSelect>>", self._on_select)
+        self.file_list.bind("<Delete>", self._on_delete_key)
+        self.file_list.bind("<Button-3>", self._on_right_click)
         
         self.thumbnail_container = ttk.Frame(self.frame)
         self.thumbnail_container.pack_forget()
@@ -86,14 +98,45 @@ class FileListPanel:
         self.file_paths = []
         self.selected_index = -1
         self.selected_thumbnail_index = -1
+        self.selected_thumbnail_indices = set()
+        self._last_clicked_thumbnail = -1
     
     def _on_select(self, event):
         selection = self.file_list.curselection()
         if selection:
-            index = selection[0]
+            index = selection[-1]
             if index < len(self.file_paths):
                 self.selected_index = index
                 self.on_file_select(self.file_paths[index])
+    
+    def _on_delete_key(self, event):
+        self._remove_selected_files()
+    
+    def _on_right_click(self, event):
+        selection = self.file_list.curselection()
+        if selection:
+            menu = tk.Menu(self.frame, tearoff=0)
+            menu.add_command(label="Delete selected", command=self._remove_selected_files)
+            menu.tk_popup(event.x_root, event.y_root)
+    
+    def _remove_selected_files(self):
+        selection = self.file_list.curselection()
+        if not selection:
+            return
+        
+        for index in reversed(selection):
+            if 0 <= index < len(self.file_paths):
+                del self.file_paths[index]
+                self.file_list.delete(index)
+        
+        if self.list_style == "thumbnail":
+            self.update_thumbnail_view()
+        
+        self.selected_index = -1
+        self.selected_thumbnail_index = -1
+        
+        if self.on_clear_preview:
+            self.on_clear_preview()
     
     def _on_thumbnail_scroll(self, event):
         delta = event.delta // 120
@@ -155,6 +198,27 @@ class FileListPanel:
                 self.on_file_select(self.file_paths[last_index])
         return added
     
+    def add_and_select_file(self, file_path):
+        if os.path.isfile(file_path) and file_path not in self.file_paths:
+            self.file_paths.append(file_path)
+            self.file_list.insert(tk.END, self.shorten_filename(os.path.basename(file_path)))
+            index = len(self.file_paths) - 1
+            
+            if self.list_style == "thumbnail":
+                self.update_thumbnail_view()
+            
+            self.select_index(index)
+            
+            if self.list_style == "thumbnail":
+                self.selected_thumbnail_index = index
+                self.selected_thumbnail_indices = {index}
+                self._last_clicked_thumbnail = index
+                self._update_thumbnail_selection()
+            
+            self.on_file_select(file_path)
+            return True
+        return False
+    
     def clear(self):
         self.file_list.delete(0, tk.END)
         self.file_paths = []
@@ -165,6 +229,11 @@ class FileListPanel:
         self.thumbnail_canvas.config(scrollregion=self.thumbnail_canvas.bbox("all"))
         self.selected_index = -1
         self.selected_thumbnail_index = -1
+        self.selected_thumbnail_indices = set()
+        self._last_clicked_thumbnail = -1
+        
+        if self.on_clear_preview:
+            self.on_clear_preview()
     
     def toggle_style(self):
         if self.list_style == "list":
@@ -172,12 +241,25 @@ class FileListPanel:
             self.toggle_button.config(text="📝List")
             self.list_container.pack_forget()
             self.thumbnail_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            selection = self.file_list.curselection()
+            if selection:
+                self.selected_thumbnail_indices = set(selection)
+                if selection:
+                    self.selected_thumbnail_index = selection[-1]
+                    self._last_clicked_thumbnail = selection[-1]
             self.update_thumbnail_view()
         else:
             self.list_style = "list"
             self.toggle_button.config(text="🖼Thumb")
             self.thumbnail_container.pack_forget()
             self.list_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            self.thumbnail_canvas.unbind_all("<Delete>")
+            saved_selection = self.selected_thumbnail_indices.copy()
+            self.selected_thumbnail_indices = set()
+            self._last_clicked_thumbnail = -1
+            for idx in saved_selection:
+                if 0 <= idx < len(self.file_paths):
+                    self.file_list.selection_set(idx)
     
     def update_thumbnail_view(self):
         for item in self.thumbnail_items:
@@ -202,7 +284,7 @@ class FileListPanel:
                     width=134, 
                     height=158
                 )
-                if i == self.selected_thumbnail_index:
+                if i in self.selected_thumbnail_indices:
                     thumb_frame.configure(
                         highlightbackground=ModernStyle.COLORS['accent_primary']
                     )
@@ -231,9 +313,13 @@ class FileListPanel:
                 )
                 name_label.pack(pady=(0, 5))
                 
-                thumb_frame.bind("<Button-1>", lambda e, idx=i: self._on_thumbnail_click(idx))
-                thumb_label.bind("<Button-1>", lambda e, idx=i: self._on_thumbnail_click(idx))
-                name_label.bind("<Button-1>", lambda e, idx=i: self._on_thumbnail_click(idx))
+                thumb_frame.bind("<Button-1>", lambda e, idx=i: self._on_thumbnail_click(e, idx))
+                thumb_label.bind("<Button-1>", lambda e, idx=i: self._on_thumbnail_click(e, idx))
+                name_label.bind("<Button-1>", lambda e, idx=i: self._on_thumbnail_click(e, idx))
+                
+                thumb_frame.bind("<Button-3>", lambda e, idx=i: self._on_thumbnail_right_click(e, idx))
+                thumb_label.bind("<Button-3>", lambda e, idx=i: self._on_thumbnail_right_click(e, idx))
+                name_label.bind("<Button-3>", lambda e, idx=i: self._on_thumbnail_right_click(e, idx))
                 
                 thumb_frame.bind("<MouseWheel>", self._on_thumbnail_scroll)
                 thumb_label.bind("<MouseWheel>", self._on_thumbnail_scroll)
@@ -253,26 +339,80 @@ class FileListPanel:
         
         self.thumbnail_frame.update_idletasks()
         self.thumbnail_canvas.config(scrollregion=self.thumbnail_canvas.bbox("all"))
+        
+        self.thumbnail_canvas.bind_all("<Delete>", self._on_thumbnail_delete_key)
     
     def _on_thumbnail_hover(self, frame, is_enter, index=-1):
         if is_enter:
             frame.configure(highlightbackground=ModernStyle.COLORS['hover'])
         else:
-            if index == self.selected_thumbnail_index:
+            if index in self.selected_thumbnail_indices:
                 frame.configure(highlightbackground=ModernStyle.COLORS['accent_primary'])
             else:
                 frame.configure(highlightbackground=ModernStyle.COLORS['border'])
     
-    def _on_thumbnail_click(self, index):
+    def _on_thumbnail_click(self, event, index):
         if index < len(self.file_paths):
-            self.selected_thumbnail_index = index
-            self.selected_index = index
+            if event.state & 0x0004:
+                if index in self.selected_thumbnail_indices:
+                    self.selected_thumbnail_indices.discard(index)
+                else:
+                    self.selected_thumbnail_indices.add(index)
+            elif event.state & 0x0001:
+                start = min(self._last_clicked_thumbnail, index)
+                end = max(self._last_clicked_thumbnail, index)
+                self.selected_thumbnail_indices = set(range(start, end + 1))
+            else:
+                self.selected_thumbnail_indices = {index}
+            
+            self._last_clicked_thumbnail = index
+            
+            if self.selected_thumbnail_indices:
+                last_selected = max(self.selected_thumbnail_indices)
+                self.selected_thumbnail_index = last_selected
+                self.selected_index = last_selected
+                self.on_file_select(self.file_paths[last_selected])
+            
             self._update_thumbnail_selection()
-            self.on_file_select(self.file_paths[index])
+    
+    def _on_thumbnail_right_click(self, event, index):
+        if index not in self.selected_thumbnail_indices:
+            self.selected_thumbnail_indices = {index}
+            self._last_clicked_thumbnail = index
+            self._update_thumbnail_selection()
+        
+        menu = tk.Menu(self.frame, tearoff=0)
+        menu.add_command(label="Delete selected", command=self._remove_selected_thumbnails)
+        menu.tk_popup(event.x_root, event.y_root)
+    
+    def _on_thumbnail_delete_key(self, event):
+        if self.list_style == "thumbnail" and self.selected_thumbnail_indices:
+            self._remove_selected_thumbnails()
+    
+    def _remove_selected_thumbnails(self):
+        if not self.selected_thumbnail_indices:
+            return
+        
+        indices_to_remove = sorted(self.selected_thumbnail_indices, reverse=True)
+        
+        for index in indices_to_remove:
+            if 0 <= index < len(self.file_paths):
+                del self.file_paths[index]
+                self.file_list.delete(index)
+        
+        self.selected_thumbnail_indices = set()
+        self.selected_index = -1
+        self.selected_thumbnail_index = -1
+        self._last_clicked_thumbnail = -1
+        
+        self.update_thumbnail_view()
+        
+        if self.on_clear_preview:
+            self.on_clear_preview()
     
     def _update_thumbnail_selection(self):
         for i, item in enumerate(self.thumbnail_items):
-            if i == self.selected_thumbnail_index:
+            if i in self.selected_thumbnail_indices:
                 item.configure(highlightbackground=ModernStyle.COLORS['accent_primary'])
             else:
                 item.configure(highlightbackground=ModernStyle.COLORS['border'])
@@ -286,3 +426,7 @@ class FileListPanel:
     
     def get_count(self):
         return len(self.file_paths)
+    
+    def create_character(self):
+        if self.on_create_character:
+            self.on_create_character()
