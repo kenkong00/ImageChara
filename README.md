@@ -2,9 +2,8 @@
 
 A Windows desktop tool for reading ComfyUI image metadata and injecting AI character information into images. Supports PNG, WebP, and JPEG formats.
 
-<img width="1800" height="1173" alt="image" src="https://github.com/user-attachments/assets/823eaed1-d0d3-429c-8cc9-4d5bb88dd1ca" />
-<img width="1800" height="1173" alt="image" src="https://github.com/user-attachments/assets/d97f1817-cf49-4089-87dc-cb199ea6965b" />
-<img width="1800" height="1173" alt="image" src="https://github.com/user-attachments/assets/98a070a1-cef0-41d1-8034-eb15a256b19e" />
+<img width="1800" height="1173" alt="image" src="https://github.com/user-attachments/assets/d82ee80c-2476-49e1-ad2c-01efd24e10ef" />
+<img width="1800" height="1173" alt="image" src="https://github.com/user-attachments/assets/42eae246-1676-40ae-a3ad-c7f3f6b09b59" />
 
 ## Quick Start for New Users
 
