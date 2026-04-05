@@ -1,6 +1,6 @@
 # 图灵注 ImageChara
 
-A Windows desktop tool for reading ComfyUI image metadata and injecting AI character information into images. Supports PNG, WebP, and JPEG formats.
+A Windows desktop tool for reading ComfyUI image metadata and injecting AI character information into images. Supports PNG, WebP, and JPEG formats.（下面有中文说明）
 
 <img width="1800" height="1173" alt="image" src="https://github.com/user-attachments/assets/d82ee80c-2476-49e1-ad2c-01efd24e10ef" />
 <img width="1800" height="1173" alt="image" src="https://github.com/user-attachments/assets/42eae246-1676-40ae-a3ad-c7f3f6b09b59" />
