@@ -7,11 +7,12 @@ from .styles import ModernStyle
 
 
 class FileListPanel:
-    def __init__(self, parent, on_file_select, shorten_filename_func, on_create_character=None, on_clear_preview=None):
+    def __init__(self, parent, on_file_select, shorten_filename_func, on_create_character=None, on_clear_preview=None, on_export_json=None):
         self.on_file_select = on_file_select
         self.shorten_filename = shorten_filename_func
         self.on_create_character = on_create_character
         self.on_clear_preview = on_clear_preview
+        self.on_export_json = on_export_json
         
         self.frame = ttk.LabelFrame(parent, text="  Files  ", padding="10", width=320)
         self.frame.pack(side=tk.LEFT, fill=tk.Y, padx=(0, 15))
@@ -19,66 +20,72 @@ class FileListPanel:
         
         self.button_frame = ttk.Frame(self.frame)
         self.button_frame.pack(fill=tk.X, pady=(0, 10))
-        
+
+        self.button_row1 = ttk.Frame(self.button_frame)
+        self.button_row1.pack(fill=tk.X, pady=(0, 4))
+
         self.import_file_button = ttk.Button(
-            self.button_frame, 
-            text="📁File", 
-            command=self.import_files, 
-            width=6
+            self.button_row1,
+            text="  + File",
+            command=self.import_files,
+            width=8
         )
-        self.import_file_button.pack(side=tk.LEFT, padx=1)
-        
+        self.import_file_button.pack(side=tk.LEFT, padx=1, expand=True, fill=tk.X)
+
         self.import_dir_button = ttk.Button(
-            self.button_frame, 
-            text="📂Dir", 
-            command=self.import_dir, 
-            width=6
+            self.button_row1,
+            text="  + Folder",
+            command=self.import_dir,
+            width=8
         )
-        self.import_dir_button.pack(side=tk.LEFT, padx=1)
-        
+        self.import_dir_button.pack(side=tk.LEFT, padx=1, expand=True, fill=tk.X)
+
         self.clear_button = ttk.Button(
-            self.button_frame, 
-            text="🗑Clear", 
-            command=self.clear, 
-            width=6
+            self.button_row1,
+            text="  ✕ Clear",
+            command=self.clear,
+            width=8
         )
-        self.clear_button.pack(side=tk.LEFT, padx=1)
-        
-        self.list_style = "list"
+        self.clear_button.pack(side=tk.LEFT, padx=1, expand=True, fill=tk.X)
+
         self.toggle_button = ttk.Button(
-            self.button_frame, 
-            text="🖼Thumb", 
-            command=self.toggle_style, 
-            width=6
+            self.button_frame,
+            text="  ⊞ Grid View",
+            command=self.toggle_style,
+            width=20
         )
-        self.toggle_button.pack(side=tk.LEFT, padx=1)
-        
-        self.create_char_button = ttk.Button(
-            self.button_frame, 
-            text="👤Char", 
-            command=self.create_character, 
-            width=6
-        )
-        self.create_char_button.pack(side=tk.LEFT, padx=1)
-        
-        self.list_container = ttk.Frame(self.frame)
-        self.list_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        
+        self.toggle_button.pack(fill=tk.X)
+
+        self.list_style = "list"
+
+        self.content_area = ttk.Frame(self.frame)
+        self.content_area.pack(fill=tk.BOTH, expand=True)
+
+        self.list_container = ttk.Frame(self.content_area)
+        self.list_container.pack(fill=tk.BOTH, expand=True)
+
         self.file_list = ModernStyle.create_styled_listbox(self.list_container, height=30, selectmode=tk.EXTENDED)
         self.file_list.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
-        
-        self.scrollbar = ttk.Scrollbar(self.list_container, orient=tk.VERTICAL, command=self.file_list.yview)
+
+        self.scrollbar = ttk.Scrollbar(self.list_container, orient=tk.VERTICAL, command=self.file_list.yview, style='TScrollbar')
         self.scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.file_list.config(yscrollcommand=self.scrollbar.set)
-        
+
         self.file_list.bind("<<ListboxSelect>>", self._on_select)
         self.file_list.bind("<Delete>", self._on_delete_key)
         self.file_list.bind("<Button-3>", self._on_right_click)
+
+        self.export_json_button = ttk.Button(
+            self.frame,
+            text="  ↓ Export JSON",
+            command=self.export_json
+        )
+        self.export_json_button.pack(fill=tk.X, pady=(10, 0))
         
-        self.thumbnail_container = ttk.Frame(self.frame)
+        self.thumbnail_container = ttk.Frame(self.content_area)
         self.thumbnail_container.pack_forget()
-        
-        self.thumbnail_scrollbar = ttk.Scrollbar(self.thumbnail_container, orient=tk.VERTICAL)
+
+        self.thumbnail_scrollbar = ttk.Scrollbar(self.thumbnail_container, orient=tk.VERTICAL, style='TScrollbar')
         self.thumbnail_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         
         self.thumbnail_canvas = ModernStyle.create_styled_canvas(
@@ -194,8 +201,6 @@ class FileListPanel:
             if self.list_style == "thumbnail":
                 self.selected_thumbnail_index = last_index
                 self._update_thumbnail_selection()
-            if last_index >= 0:
-                self.on_file_select(self.file_paths[last_index])
         return added
     
     def add_and_select_file(self, file_path):
@@ -238,7 +243,7 @@ class FileListPanel:
     def toggle_style(self):
         if self.list_style == "list":
             self.list_style = "thumbnail"
-            self.toggle_button.config(text="📝List")
+            self.toggle_button.config(text="  ☰ List ")
             self.list_container.pack_forget()
             self.thumbnail_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
             selection = self.file_list.curselection()
@@ -250,7 +255,7 @@ class FileListPanel:
             self.update_thumbnail_view()
         else:
             self.list_style = "list"
-            self.toggle_button.config(text="🖼Thumb")
+            self.toggle_button.config(text="  ⊞ Grid ")
             self.thumbnail_container.pack_forget()
             self.list_container.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
             self.thumbnail_canvas.unbind_all("<Delete>")
@@ -430,3 +435,7 @@ class FileListPanel:
     def create_character(self):
         if self.on_create_character:
             self.on_create_character()
+
+    def export_json(self):
+        if self.on_export_json:
+            self.on_export_json()

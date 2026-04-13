@@ -24,79 +24,83 @@ class ResultPanel:
         self.notebook.bind('<<NotebookTabChanged>>', self.on_tab_changed)
         
         self.prompt_tab = ttk.Frame(self.notebook, padding=5)
-        self.notebook.add(self.prompt_tab, text="  ✨ Prompt  ")
-        
+        self.notebook.add(self.prompt_tab, text="Prompt")
+
         self.prompt_text = ModernStyle.create_styled_text(self.prompt_tab, wrap=tk.WORD)
-        self.prompt_scrollbar = ttk.Scrollbar(self.prompt_tab, orient=tk.VERTICAL, command=self.prompt_text.yview)
+        self.prompt_scrollbar = ttk.Scrollbar(self.prompt_tab, orient=tk.VERTICAL, command=self.prompt_text.yview, style='TScrollbar')
         self.prompt_text.config(yscrollcommand=self.prompt_scrollbar.set)
         self.prompt_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.prompt_text.pack(fill=tk.BOTH, expand=True)
-        
+
         self.params_tab = ttk.Frame(self.notebook, padding=5)
-        self.notebook.add(self.params_tab, text="  ⚙ Params  ")
-        
+        self.notebook.add(self.params_tab, text="Params")
+
         self.params_text = ModernStyle.create_styled_text(self.params_tab, wrap=tk.WORD)
-        self.params_scrollbar = ttk.Scrollbar(self.params_tab, orient=tk.VERTICAL, command=self.params_text.yview)
+        self.params_scrollbar = ttk.Scrollbar(self.params_tab, orient=tk.VERTICAL, command=self.params_text.yview, style='TScrollbar')
         self.params_text.config(yscrollcommand=self.params_scrollbar.set)
         self.params_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.params_text.pack(fill=tk.BOTH, expand=True)
-        
+
         self.workflow_tab = ttk.Frame(self.notebook, padding=5)
-        self.notebook.add(self.workflow_tab, text="  🔧 Workflow  ")
-        
+        self.notebook.add(self.workflow_tab, text="Workflow")
+
         self.workflow_text = ModernStyle.create_styled_text(self.workflow_tab, wrap=tk.WORD)
-        self.workflow_scrollbar = ttk.Scrollbar(self.workflow_tab, orient=tk.VERTICAL, command=self.workflow_text.yview)
+        self.workflow_scrollbar = ttk.Scrollbar(self.workflow_tab, orient=tk.VERTICAL, command=self.workflow_text.yview, style='TScrollbar')
         self.workflow_text.config(yscrollcommand=self.workflow_scrollbar.set)
         self.workflow_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.workflow_text.pack(fill=tk.BOTH, expand=True)
-        
+
         self.character_tab = ttk.Frame(self.notebook, padding=5)
-        self.notebook.add(self.character_tab, text="  🎭 Character  ")
-        
-        self.character_frame = tk.Frame(self.character_tab, bg='#2d2d2d', padx=2, pady=2)
+        self.notebook.add(self.character_tab, text="Character")
+
+        self.character_frame = tk.Frame(self.character_tab, bg=ModernStyle.COLORS['bg_secondary'], padx=2, pady=2)
         self.character_frame.pack(fill=tk.BOTH, expand=True)
-        
+
         self.character_text = ModernStyle.create_styled_text(self.character_frame, wrap=tk.WORD)
-        self.character_scrollbar = ttk.Scrollbar(self.character_frame, orient=tk.VERTICAL, command=self.character_text.yview)
+        self.character_scrollbar = ttk.Scrollbar(self.character_frame, orient=tk.VERTICAL, command=self.character_text.yview, style='TScrollbar')
         self.character_text.config(yscrollcommand=self.character_scrollbar.set)
         self.character_scrollbar.pack(side=tk.RIGHT, fill=tk.Y)
         self.character_text.pack(fill=tk.BOTH, expand=True)
         
         self.button_frame = ttk.Frame(self.frame)
-        self.button_frame.pack(fill=tk.X, pady=(15, 0))
+        self.button_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=(20, 10))
         
         self.copy_button = ttk.Button(
-            self.button_frame, 
-            text="📋 Copy", 
-            command=self.on_copy_click, 
+            self.button_frame,
+            text="Copy",
+            command=self.on_copy_click,
             width=10
         )
         self.copy_button.pack(side=tk.LEFT, padx=3)
-        
+
         self.edit_button = tk.Button(
-            self.button_frame, 
-            text="✏️ Edit", 
-            command=self.toggle_edit_mode, 
-            width=10,
-            bg='#3d3d3d',
-            fg='white',
-            relief=tk.RAISED,
-            cursor='hand2'
+            self.button_frame,
+            text="Edit",
+            command=self.toggle_edit_mode,
+            width=12,
+            height=2,
+            bg=ModernStyle.COLORS['bg_tertiary'],
+            fg=ModernStyle.COLORS['text_primary'],
+            relief=tk.FLAT,
+            cursor='hand2',
+            font=ModernStyle.FONTS['button'],
+            activebackground=ModernStyle.COLORS['accent_primary'],
+            activeforeground=ModernStyle.COLORS['bg_primary']
         )
         self.edit_button.pack(side=tk.LEFT, padx=3)
-        
+
         self.export_json_button = ttk.Button(
-            self.button_frame, 
-            text="📄 JSON", 
-            command=self.on_export_json_click, 
+            self.button_frame,
+            text="JSON",
+            command=self.on_export_json_click,
             width=10
         )
         self.export_json_button.pack(side=tk.LEFT, padx=3)
-        
+
         self.export_txt_button = ttk.Button(
-            self.button_frame, 
-            text="📝 TXT", 
-            command=self.on_export_txt_click, 
+            self.button_frame,
+            text="TXT",
+            command=self.on_export_txt_click,
             width=10
         )
         self.export_txt_button.pack(side=tk.LEFT, padx=3)
@@ -202,22 +206,22 @@ class ResultPanel:
     def set_edit_mode_ui(self, editing):
         if editing:
             self.notebook.select(self.character_tab)
-            self.character_frame.config(bg='#00aa00', padx=3, pady=3)
-            self.notebook.tab(self.character_tab, text="  🎭 Character ✏️  ")
+            self.character_frame.config(bg=ModernStyle.COLORS['accent_primary'], padx=3, pady=3)
+            self.notebook.tab(self.character_tab, text="Character *")
             self.edit_button.config(
-                text="💾 Save",
-                bg='#00cc00',
-                fg='white',
-                relief=tk.SUNKEN
+                text="Save",
+                bg=ModernStyle.COLORS['accent_primary'],
+                fg=ModernStyle.COLORS['bg_primary'],
+                relief=tk.FLAT
             )
         else:
-            self.character_frame.config(bg='#2d2d2d', padx=2, pady=2)
-            self.notebook.tab(self.character_tab, text="  🎭 Character  ")
+            self.character_frame.config(bg=ModernStyle.COLORS['bg_secondary'], padx=2, pady=2)
+            self.notebook.tab(self.character_tab, text="Character")
             self.edit_button.config(
-                text="✏️ Edit",
-                bg='#3d3d3d',
-                fg='white',
-                relief=tk.RAISED
+                text="Edit",
+                bg=ModernStyle.COLORS['bg_tertiary'],
+                fg=ModernStyle.COLORS['text_primary'],
+                relief=tk.FLAT
             )
     
     def cancel_edit_mode(self):
@@ -739,3 +743,10 @@ class ResultPanel:
                 messagebox.showinfo("Success", f"Data exported to {file_path}")
             except Exception as e:
                 messagebox.showerror("Error", f"Error exporting file: {str(e)}")
+
+
+
+
+
+
+

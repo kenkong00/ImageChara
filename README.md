@@ -1,6 +1,6 @@
 # 图灵注 ImageChara
 
-A Windows desktop tool for reading ComfyUI image metadata and injecting AI character information into images. Supports PNG, WebP, and JPEG formats.（下面有中文说明）
+A Windows desktop tool for reading ComfyUI image metadata, injecting AI character information into images, and managing AI chat characters. Supports PNG, WebP, and JPEG formats.（下面有中文说明）
 
 <img width="1800" height="1173" alt="image" src="https://github.com/user-attachments/assets/d82ee80c-2476-49e1-ad2c-01efd24e10ef" />
 <img width="1800" height="1173" alt="image" src="https://github.com/user-attachments/assets/42eae246-1676-40ae-a3ad-c7f3f6b09b59" />
@@ -61,6 +61,20 @@ Download the latest release from the [Releases](https://github.com/kenkong00/pro
 - Image preview with zoom, pan, and reset
 - Copy prompts and workflow to clipboard
 - Export metadata to JSON or TXT files
+- Status bar with real-time updates and timestamp
+- Operation history tracking
+- Detail window for viewing operation history
+
+### Image Information Injection
+- Inject AI character information into images with specific format requirements
+- Format must be "field: content" with space after colon and using English characters
+- Edit and save AI character information directly into images
+- Support for character fields: Name, Description, Personality, Scenario, First Message, etc.
+
+### Data Export
+- Export Prompts to JSON: Batch export prompts from all images in the list to a single JSON file
+- Export metadata to JSON or TXT files
+- Copy current tab content to clipboard
 
 ## Supported Node Types
 
@@ -89,6 +103,11 @@ imagechara/
 ├── utils/                     # Utility module
 │   ├── __init__.py
 │   └── helpers.py             # Helper functions
+├── .json/                     # JSON files and scripts
+├── .trae/                     # Trae IDE files
+├── .web/                      # Web version files
+├── check_images/              # Image checking scripts
+├── gAI codetraeimagechara-web/ # Web version project
 ├── logo/                      # Application icons
 └── requirements.txt           # Dependencies
 ```
@@ -126,6 +145,20 @@ imagechara/
 - Copy: Copy current tab content to clipboard
 - Export JSON: Save metadata as JSON file
 - Export TXT: Save metadata as text file
+- Export Prompts to JSON: Export prompts from multiple images to a single JSON file
+
+### Image Information Injection
+1. Select an image in the file list
+2. Go to the "Character" tab
+3. Click "Edit" button to enter edit mode
+4. Enter character information in the required format: "field: content" (with space after colon, using English characters)
+5. Click "Save" to inject the information into the image
+   - For WebP/JPEG files, a new PNG file will be created automatically
+
+### View Operation History
+1. Click the "i" button in the status bar
+2. A detail window will open showing the operation history
+3. The history includes timestamps and operation details
 
 ## Building from Source
 
@@ -153,6 +186,15 @@ The executable will be in the `dist` directory.
 Open source project, contributions welcome!
 
 ## Version History
+
+### v1.4.0
+
+- **Image Information Injection** - Inject AI character information into images with specific format requirements (field: content)
+- **Prompt Export to JSON** - Batch export prompts from all images in the list to a single JSON file
+- **Operation History** - Track and view application operation history
+- **Detail Window** - View detailed operation history in a separate window
+- **Enhanced Metadata Parser** - Improved parsing of various metadata formats
+- **Status Bar** - Real-time status updates with timestamp
 
 ### v1.3.0
 
@@ -222,6 +264,20 @@ Open source project, contributions welcome!
 - 图片预览支持滚轮缩放、拖拽平移、双击复位
 - 一键复制提示词、一键复制工作流JSON
 - 支持将解析结果导出为JSON/TXT文件
+- 带时间戳的实时状态栏更新
+- 操作历史跟踪
+- 用于查看操作历史的详情窗口
+
+### 图片信息注入
+- 将AI角色信息注入到图片中，有特定格式要求
+- 格式必须为"field: content"，冒号后需加空格，且必须使用英文字符
+- 编辑并保存AI角色信息到图片中
+- 支持的角色字段：名称、描述、性格、场景、第一条消息等
+
+### 数据导出
+- Export Prompts to JSON：批量导出图片列表中所有图片的prompt到单个JSON文件
+- 将元数据导出为JSON或TXT文件
+- 复制当前标签页内容到剪贴板
 
 ## 使用说明
 
@@ -256,6 +312,20 @@ Open source project, contributions welcome!
 - Copy：复制当前标签页内容到剪贴板
 - Export JSON：保存元数据为JSON文件
 - Export TXT：保存元数据为文本文件
+- Export Prompts to JSON：将多个图片的提示词导出到单个JSON文件
+
+### 图片信息注入
+1. 在文件列表中选择一张图片
+2. 切换到"Character"标签页
+3. 点击"Edit"按钮进入编辑模式
+4. 按照要求的格式输入角色信息："field: content"（冒号后需加空格，使用英文字符）
+5. 点击"Save"将信息注入到图片中
+   - 对于WebP/JPEG文件，会自动创建新的PNG文件
+
+### 查看操作历史
+1. 点击状态栏中的"i"按钮
+2. 会打开一个详情窗口显示操作历史
+3. 历史记录包含时间戳和操作详情
 
 ## 技术栈
 
@@ -280,11 +350,18 @@ imagechara/
 ├── utils/                     # 工具模块
 │   ├── __init__.py
 │   └── helpers.py             # 工具函数
-├── logo/                      # 应用图标
 └── requirements.txt           # 依赖列表
 ```
 
 ## 版本历史
+
+### v1.4.0
+- **图片信息注入** - 将AI角色信息注入到图片中，有特定格式要求（field: content）
+- **提示词导出到JSON** - 批量导出图片列表中所有图片的prompt到单个JSON文件
+- **操作历史** - 跟踪和查看应用程序操作历史
+- **详情窗口** - 在单独窗口中查看详细操作历史
+- **增强的元数据解析器** - 改进各种元数据格式的解析
+- **状态栏** - 带时间戳的实时状态更新
 
 ### v1.3.0
 - **更名为图灵注 ImageChara** - 反映超越ComfyUI元数据的扩展功能

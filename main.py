@@ -13,7 +13,7 @@ class ComfyUIMetadataReader:
     def __init__(self, root):
         self.root = root
         self.root.title("图灵注 ImageChara")
-        self.root.geometry("1200x750")
+        self.root.geometry("1200x800")
         self.root.resizable(True, True)
         
         # Set window icon
@@ -40,7 +40,8 @@ class ComfyUIMetadataReader:
             on_file_select=self.on_file_select,
             shorten_filename_func=shorten_filename,
             on_create_character=self.create_character,
-            on_clear_preview=self.clear_preview
+            on_clear_preview=self.clear_preview,
+            on_export_json=self.export_to_json
         )
         
         self.image_panel = ImagePanel(self.main_frame)
@@ -53,20 +54,20 @@ class ComfyUIMetadataReader:
         )
         
         self.status_frame = ttk.Frame(self.root)
-        self.status_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=8, padx=15)
-        
+        self.status_frame.pack(fill=tk.X, side=tk.BOTTOM, pady=5, padx=15)
+
         self.status_label = ttk.Label(
-            self.status_frame, 
-            text="File list: 0 files", 
+            self.status_frame,
+            text="File list: 0 files",
             anchor=tk.W,
-            font=ModernStyle.FONTS['body']
+            font=ModernStyle.FONTS['small']
         )
         self.status_label.pack(side=tk.LEFT, fill=tk.X, expand=True)
         
         self.detail_button = ttk.Button(
-            self.status_frame, 
-            text="ℹ", 
-            width=3, 
+            self.status_frame,
+            text="  i ",
+            width=3,
             command=self.show_details
         )
         self.detail_button.pack(side=tk.RIGHT, padx=5)
@@ -87,24 +88,35 @@ class ComfyUIMetadataReader:
     
     def on_drop(self, event):
         paths = parse_dropped_files(event.data)
-        
+
         if paths:
-            added = self.file_list_panel.add_files(paths)
+            try:
+                added = self.file_list_panel.add_files(paths)
+            except Exception as e:
+                added = 0
+
             if added > 0:
                 self.update_status(f"Added {added} file(s) to list")
+                last_index = len(self.file_list_panel.file_paths) - 1
+                self.file_list_panel.select_index(last_index)
+                file_path = self.file_list_panel.file_paths[last_index]
+                try:
+                    self.process_file(file_path)
+                except Exception as e:
+                    pass
             else:
                 self.update_status("File already in list")
     
     def on_file_select(self, file_path):
         self.process_file(file_path)
-    
+
     def clear_preview(self):
         self.image_panel.clear_image()
         self.result_panel.clear()
-    
+
     def on_file_added(self, file_path):
         self.file_list_panel.add_and_select_file(file_path)
-    
+
     def process_file(self, file_path):
         try:
             self.current_file = file_path
@@ -112,7 +124,7 @@ class ComfyUIMetadataReader:
                 self.image_panel.show_image(img)
                 metadata = self.parser.parse(img)
                 self.result_panel.update(metadata, file_path)
-                
+
                 filename = os.path.basename(file_path)
                 self.update_status(f"Displaying: {filename}")
         except Exception as e:
@@ -257,6 +269,60 @@ class ComfyUIMetadataReader:
         
         cancel_button = ttk.Button(button_frame, text="❌ Cancel", command=dialog.destroy, width=15)
         cancel_button.pack(side=tk.RIGHT, padx=5)
+
+    def export_to_json(self):
+        from tkinter import filedialog
+        import json
+
+        file_paths = self.file_list_panel.file_paths
+        if not file_paths:
+            messagebox.showwarning("Warning", "File list is empty")
+            return
+
+        save_path = filedialog.asksaveasfilename(
+            title="Export Prompts to JSON",
+            defaultextension=".json",
+            initialfile="prompts_export",
+            filetypes=[("JSON Files", "*.json"), ("All Files", "*.*")]
+        )
+
+        if not save_path:
+            return
+
+        try:
+            result_list = []
+            success_count = 0
+            fail_count = 0
+
+            for i, file_path in enumerate(file_paths):
+                filename = os.path.basename(file_path)
+                try:
+                    with Image.open(file_path) as img:
+                        metadata = self.parser.parse(img)
+                        prompt = metadata.get('prompt', '')
+
+                        item = {
+                            "id": filename,
+                            "prompt": prompt
+                        }
+                        result_list.append(item)
+                        success_count += 1
+                except Exception as e:
+                    item = {
+                        "id": filename,
+                        "prompt": f"Error: {str(e)}"
+                    }
+                    result_list.append(item)
+                    fail_count += 1
+
+            with open(save_path, 'w', encoding='utf-8') as f:
+                json.dump(result_list, f, ensure_ascii=False, indent=2)
+
+            self.update_status(f"Exported {success_count} prompts to JSON ({fail_count} failed)")
+            messagebox.showinfo("Success", f"Successfully exported {success_count} prompts to:\n{save_path}")
+
+        except Exception as e:
+            messagebox.showerror("Error", f"Error exporting to JSON: {str(e)}")
 
 
 if __name__ == "__main__":

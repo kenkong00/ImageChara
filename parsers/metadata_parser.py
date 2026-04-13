@@ -274,9 +274,11 @@ class MetadataParser:
                 best_decoded = None
                 best_ascii_count = 0
                 
-                for encoding in ['utf-16-be', 'utf-16-le', 'utf-16']:
+                # 优先尝试utf-8和latin-1编码，因为它们在很多情况下更准确
+                encodings = ['utf-8', 'latin-1', 'utf-16-be', 'utf-16-le', 'utf-16']
+                for encoding in encodings:
                     try:
-                        test_decoded = unicode_data.decode(encoding)
+                        test_decoded = unicode_data.decode(encoding, errors='ignore')
                         ascii_count = count_ascii(test_decoded)
                         if ascii_count > best_ascii_count:
                             best_ascii_count = ascii_count
@@ -287,7 +289,7 @@ class MetadataParser:
                 if best_decoded:
                     decoded = best_decoded
                 else:
-                    decoded = unicode_data.decode('utf-16', errors='ignore')
+                    decoded = unicode_data.decode('utf-8', errors='ignore')
                 
                 exif_str = ''.join(c for c in decoded if c.isprintable() or c in '\n\t')
                 lines = exif_str.split('\n')
